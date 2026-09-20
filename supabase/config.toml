@@ -1,0 +1,5 @@
+# Local project identifier, not a remote Supabase project reference.
+project_id = "article-platform"
+
+[db.seed]
+enabled = false

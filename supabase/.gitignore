@@ -1,0 +1,4 @@
+# Supabase CLI local state and linked-project metadata
+.temp/
+.branches/
+.env*
