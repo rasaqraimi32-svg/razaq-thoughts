@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const siteName = "Razaq Thoughts";
-export const siteUrl = "https://razaqthoughts.me";
+export const siteUrl = "https://razaqthoughts.site";
 export const defaultTitle = "Razaq Thoughts — Articles, Thoughts & Reflections";
 export const defaultDescription = "Articles, thoughts and reflections by Razaq. A personal space to read, reflect and join the conversation.";
 
