@@ -5,5 +5,19 @@ import ArticleMeta from "./ArticleMeta";
 import Arrow from "./Arrow";
 
 export default function FeaturedArticle({ article }: { article: Article }) {
-  return <article className="featured-article"><ArticleCover category={article.category} url={article.coverImageUrl} className="featured-art" /><div className="featured-content"><p className="eyebrow category-label">{article.category} <span className="eyebrow-divider">/</span> Featured perspective</p><h3><Link href={"/articles/" + article.slug}>{article.title}</Link></h3><p className="featured-excerpt">{article.excerpt}</p><ArticleMeta article={article} /><Link className="text-link" href={"/articles/" + article.slug}>Read Article <Arrow /></Link></div></article>;
+  return (
+    <article className="publication-feature">
+      <Link href={"/articles/" + article.slug} className="feature-cover-stage" aria-label={"Read " + article.title}>
+        <span className="feature-edition" aria-hidden="true">The selected reading</span>
+        <ArticleCover category={article.category} title={article.title} author={article.author} url={article.coverImageUrl} />
+      </Link>
+      <div className="feature-copy">
+        <p className="eyebrow category-label">In focus <span className="eyebrow-divider">/</span> {article.category}</p>
+        <h3><Link href={"/articles/" + article.slug}>{article.title}</Link></h3>
+        <p className="feature-deck">{article.excerpt}</p>
+        <ArticleMeta article={article} />
+        <Link className="button" href={"/articles/" + article.slug}>Read the article <Arrow /></Link>
+      </div>
+    </article>
+  );
 }

@@ -1,14 +1,11 @@
-export default function ArticleArtwork({ category, className = "" }: { category: string; className?: string }) {
-  return <div className={"article-art " + className} data-category={category} aria-hidden="true">
-    <svg viewBox="0 0 640 420" fill="none" preserveAspectRatio="xMidYMid slice">
-      <path d="M0 350H640M80 0V420M560 0V420" stroke="currentColor" opacity=".12" />
-      {category === "Technology" && <><circle cx="320" cy="205" r="154" stroke="currentColor" opacity=".18" /><circle cx="320" cy="205" r="115" stroke="currentColor" opacity=".4" /><circle cx="320" cy="205" r="74" fill="currentColor" /><path d="M70 205h175m150 0h175M320 30v80m0 190v90" stroke="currentColor" /><circle cx="464" cy="150" r="8" fill="currentColor" /><circle cx="205" cy="284" r="5" fill="currentColor" /><path d="m142 80 30 30m296 192 30 30" stroke="currentColor" /></>}
-      {category === "Society" && <><path d="M137 350V180a82 82 0 0 1 164 0v170" fill="currentColor" opacity=".22" /><path d="M250 350V145a82 82 0 0 1 164 0v205" fill="currentColor" opacity=".8" /><path d="M363 350V205a70 70 0 0 1 140 0v145" stroke="currentColor" strokeWidth="2" /><path d="M190 350V215a30 30 0 0 1 60 0v135M302 350V180a30 30 0 0 1 60 0v170" stroke="var(--art-bg)" strokeWidth="2" /></>}
-      {category === "Education" && <><path d="m320 125-158-30v230l158 32 158-32V95l-158 30Z" fill="currentColor" opacity=".2" /><path d="m320 145-122-27v180l122 28 122-28V118l-122 27Z" stroke="currentColor" strokeWidth="2" /><path d="M320 145v181m-94-163 64 14m-64 15 64 14m-64 15 64 14m60-58 64-14m-64 43 64-14m-64 43 64-14" stroke="currentColor" /><circle cx="320" cy="64" r="17" fill="currentColor" /></>}
-      {category === "Culture" && <><circle cx="271" cy="207" r="118" fill="currentColor" opacity=".22" /><circle cx="365" cy="207" r="118" stroke="currentColor" strokeWidth="2" /><path d="M248 72v271m35-282v292m35-274v253m35-220v187m35-119v49" stroke="currentColor" opacity=".6" /><path d="M145 350h350" stroke="currentColor" /></>}
-      {category === "Philosophy" && <><circle cx="320" cy="162" r="85" stroke="currentColor" strokeWidth="2" /><path d="m320 220-137 132h274L320 220Z" fill="currentColor" opacity=".65" /><path d="M160 162h320M320 30v54" stroke="currentColor" opacity=".35" /><circle cx="320" cy="162" r="35" fill="var(--art-bg)" /><circle cx="320" cy="162" r="6" fill="currentColor" /></>}
-      {category === "Development" && <><path d="M140 350V270h90v-70h90v-70h90V60h90v290H140Z" fill="currentColor" opacity=".22" /><path d="M140 350h90v-70h90v-70h90v-70h90" stroke="currentColor" strokeWidth="2" /><circle cx="185" cy="232" r="15" fill="currentColor" /><path d="m135 140 130-70m-33-7 34 7-13 32" stroke="currentColor" strokeWidth="2" /></>}
-      <path d="M30 30h24M30 30v24M610 390h-24M610 390v-24" stroke="currentColor" opacity=".4" />
-    </svg><span className="art-label">RAZAQ THOUGHTS <span>—</span> {category.toUpperCase()}</span>
+type Props = { category: string; title?: string; author?: string; className?: string };
+
+/** Neutral placeholder for older articles and unavailable image URLs. */
+export default function ArticleArtwork({ className = "" }: Props) {
+  return <div className={"publication-cover cover-placeholder " + className} aria-hidden="true">
+    <svg width="44" height="52" viewBox="0 0 44 52" fill="none">
+      <path d="M8 3h20l9 9v37H8V3Z M28 3v10h9 M15 23h15 M15 30h15 M15 37h10" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+    <span>Cover image unavailable</span>
   </div>;
 }

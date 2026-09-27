@@ -1,3 +1,4 @@
+import { validateStoredContent } from "./rich-content";
 export const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export function slugify(title: string) {
@@ -11,14 +12,15 @@ export function validateArticle(form: FormData, editing: boolean) {
   const title = text(form, "title");
   const slug = autoSlug ? slugify(title) : text(form, "slug");
   const excerpt = text(form, "excerpt");
-  const content = text(form, "content");
+  let content = text(form, "content");
+  try { content = validateStoredContent(content); } catch (error) { errors.content = error instanceof Error ? error.message : "Invalid article content."; }
   const author_name = text(form, "author_name");
   const category_id = text(form, "category_id");
   const status = text(form, "status");
   const reading = text(form, "reading_time");
   const reading_time = reading ? Number(reading) : null;
   const cover_image_url = text(form, "cover_image_url") || null;
-  for (const [key, value, max, label] of [["title", title, 250, "Title"], ["excerpt", excerpt, 1000, "Excerpt"], ["content", content, 100000, "Content"], ["author_name", author_name, 150, "Author name"]] as const) {
+  for (const [key, value, max, label] of [["title", title, 250, "Title"], ["excerpt", excerpt, 1000, "Excerpt"], ["author_name", author_name, 150, "Author name"]] as const) {
     if (!value || value.length > max) errors[key] = label + " is required and must be at most " + max + " characters.";
   }
   if (!slugPattern.test(slug) || slug.length > 180) errors.slug = "Use lowercase letters, numbers and single hyphens, up to 180 characters.";

@@ -1,3 +1,4 @@
+import { parseRichContent, richTextContent, type RichDocument } from "./rich-content";
 export type PublicComment = {
   id: string;
   articleId: string;
@@ -29,6 +30,7 @@ export type PublicArticle = {
   id: string; title: string; slug: string; excerpt: string; category: string;
   author: string; publishedAt: string; readingTime: number; featured: boolean;
   coverImageUrl?: string | null;
+  richContent?: RichDocument;
   content: { type: "paragraph" | "heading" | "quote"; text: string }[];
 };
 export type MutationState = { error?: string; success?: string; errors?: Record<string, string>; id?: string };
@@ -38,12 +40,16 @@ export function formatDate(date: string | null) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(date));
 }
 export function toPublicArticle(row: ArticleRecord): PublicArticle {
+  let richContent: RichDocument | undefined;
+  try { richContent = parseRichContent(row.content) ?? undefined; } catch { /* Corrupt data remains escaped text, never HTML. */ }
+  const readable = richContent ? richTextContent(richContent) : row.content;
   return { id: row.id, title: row.title, slug: row.slug, excerpt: row.excerpt,
     category: row.categories?.name ?? "Uncategorised", author: row.author_name,
     publishedAt: row.published_at ?? row.created_at,
-    readingTime: row.reading_time ?? Math.max(1, Math.ceil(row.content.trim().split(/\s+/).length / 200)),
+    readingTime: row.reading_time ?? Math.max(1, Math.ceil(readable.trim().split(/\s+/).length / 200)),
     featured: row.featured, coverImageUrl: row.cover_image_url,
     // Plain text stays escaped by React; HTML supplied in the editor is never executed.
-    content: row.content.split(/\n\s*\n/).filter(Boolean).map(text => ({ type: "paragraph", text })),
+    ...(richContent ? { richContent } : {}),
+    content: readable.split(/\n\s*\n/).filter(Boolean).map(text => ({ type: "paragraph", text })),
   };
 }

@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // 3 MB cover plus article text and multipart overhead.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   reactCompiler: true,
 };
 

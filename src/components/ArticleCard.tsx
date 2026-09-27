@@ -5,8 +5,20 @@ import ArticleMeta from "./ArticleMeta";
 import Arrow from "./Arrow";
 
 export default function ArticleCard({ article }: { article: Article }) {
-  return <article className="article-card">
-    <Link href={"/articles/" + article.slug} className="art-link" tabIndex={-1} aria-hidden="true"><ArticleCover category={article.category} url={article.coverImageUrl} /></Link>
-    <div className="card-content"><p className="eyebrow category-label">{article.category}</p><h3><Link href={"/articles/" + article.slug}>{article.title}</Link></h3><p className="card-excerpt">{article.excerpt}</p><ArticleMeta article={article} /><Link className="text-link card-read" href={"/articles/" + article.slug}>Read article <span className="sr-only">: {article.title}</span><Arrow /></Link></div>
-  </article>;
+  return (
+    <article className="publication-card">
+      <Link href={"/articles/" + article.slug} className="publication-card-link">
+        <div className="publication-plinth" aria-hidden="true">
+          <ArticleCover category={article.category} title={article.title} author={article.author} url={article.coverImageUrl} />
+          <span className="cover-open">Open publication <Arrow /></span>
+        </div>
+        <div className="publication-card-heading">
+          <p className="eyebrow category-label">{article.category}</p>
+          <h3>{article.title}</h3>
+        </div>
+      </Link>
+      <p className="publication-excerpt">{article.excerpt}</p>
+      <ArticleMeta article={article} />
+    </article>
+  );
 }
