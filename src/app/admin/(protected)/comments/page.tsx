@@ -1,3 +1,4 @@
+import CommentSimulationTools from "@/components/admin/CommentSimulationTools";
 import Link from "next/link";
 import { getAdminComments } from "@/lib/journal/admin-comment-queries";
 import {
@@ -35,6 +36,8 @@ export default async function AdminCommentsPage() {
           </p>
         </div>
       </div>
+
+      <CommentSimulationTools />
 
       {comments.length === 0 ? (
         <div className="admin-empty-state">

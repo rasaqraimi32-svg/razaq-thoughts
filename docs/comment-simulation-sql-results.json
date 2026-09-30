@@ -1,0 +1,33 @@
+{
+  "database": "Disposable local PostgreSQL 18; minimal Auth/Storage compatibility fixtures",
+  "suites": [
+    "schema_security",
+    "reviewed_work_security",
+    "comment_simulation_security"
+  ],
+  "concurrent": {
+    "advisoryWaitObserved": true,
+    "seeded": 1,
+    "skipped": 1,
+    "comments": 15
+  },
+  "articles": [
+    {
+      "title": "What Do We Miss When We Study Plants Without Studying People?",
+      "count": 21
+    },
+    {
+      "title": "What If the Land Is Also a Teacher?",
+      "count": 21
+    },
+    {
+      "title": "Perhaps Sustainability Needs a Different Story",
+      "count": 24
+    },
+    {
+      "title": "Whose Knowledge, Whose Terms?",
+      "count": 19
+    }
+  ],
+  "remainingAfterCleanup": 0
+}

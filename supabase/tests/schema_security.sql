@@ -238,7 +238,8 @@ begin
   begin
     delete from public.categories where id = new_category;
     raise exception 'Used category deletion was allowed';
-  exception when foreign_key_violation then null;
+  -- PostgreSQL 18 reports RESTRICT as 23001; older versions use 23503.
+  exception when foreign_key_violation or restrict_violation then null;
   end;
   assert (select category_id = new_category from public.articles where id = new_article), 'Used category must be preserved';
   update public.articles set status = 'archived' where id = new_article;
