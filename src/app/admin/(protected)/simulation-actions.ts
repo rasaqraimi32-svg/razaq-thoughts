@@ -30,3 +30,28 @@ export async function removeSimulationAction(token: string, confirmed: boolean) 
  revalidatePath("/admin/comments"); revalidatePath("/articles/[slug]","page");
  return result;
 }
+
+export async function inspectNewSimulationAction() {
+ await requireAdmin();
+ const { inspectNewSimulationArticles } = await import("@/lib/journal/new-comment-simulation");
+ return inspectNewSimulationArticles(await createClient());
+}
+export async function prepareNewSimulationAction(id:string,text:string) {
+ await requireAdmin();
+ if(!uuidPattern.test(id)||typeof text!=="string"||text.length>75000)return {error:"Invalid article or oversized dataset."};
+ try {
+  const {prepareNewSimulation}=await import("@/lib/journal/new-comment-simulation");
+  let input:unknown;try{input=JSON.parse(text);}catch{return {error:"The prepared dataset must be valid JSON."};}
+  return {result:await prepareNewSimulation(await createClient(),id,input)};
+ } catch(error) { return {error:error instanceof Error?error.message:"Unable to prepare preview."}; }
+}
+export async function confirmNewSimulationAction(id:string,confirmed:boolean) {
+ await requireAdmin();
+ if(confirmed!==true||!uuidPattern.test(id))return {error:"Preview and explicit confirmation required."};
+ try {
+  const {confirmNewSimulation}=await import("@/lib/journal/new-comment-simulation");
+  const result=await confirmNewSimulation(await createClient(),id);
+  if(result.status==="seeded"){revalidatePath("/admin/comments");revalidatePath("/articles/[slug]","page");}
+  return {result};
+ } catch(error) {return {error:error instanceof Error?error.message:"Confirmation failed; inspect again before retrying."};}
+}

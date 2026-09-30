@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateSimulatedComments, type SimulationArticle } from "./comment-simulation-generator";
 export type SimulationSnapshot = { count: number; articleIds: string[]; token: string };
 export type SimulationResult = { id: string; title: string; status: "seeded" | "skipped" | "failed"; count: number; error?: string };
-const columns = "id,title,slug,excerpt,content,updated_at,categories(name)";
+const columns = "id,title,slug,excerpt,content,published_at,updated_at,categories(name)";
 const signal = () => AbortSignal.timeout(15000);
 function databaseError(error: { code?: string; message?: string }) {
  if (error.code === "22023") return error.message ?? "Invalid simulation request.";

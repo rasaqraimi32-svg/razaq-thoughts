@@ -1,3 +1,5 @@
+> The new-publication preview workflow supersedes the immediate seed workflow below. See [new-comment-simulation.md](new-comment-simulation.md) for current preparation, timing, migration and validation instructions. The remainder documents the original implementation.
+
 # Comment simulation
 
 This implementation is local and has not been deployed. The migration has only been applied to disposable local test databases. No production comments were inserted, approved, changed or deleted.

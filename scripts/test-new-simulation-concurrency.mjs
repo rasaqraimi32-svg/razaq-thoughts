@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+export async function testNewSimulationConcurrency(db,connect){
+ const admin="set role authenticated; set request.jwt.claim.sub='00000000-0000-4000-8000-000000000001';";
+ await db.query("insert into auth.users(id) values('00000000-0000-4000-8000-000000000001');insert into public.profiles(id,display_name) values('00000000-0000-4000-8000-000000000001','Admin');");
+ const ids=['10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002'];
+ for(let i=0;i<2;i++)await db.query("insert into public.articles(id,title,slug,excerpt,content,status,published_at) values($1,$2,$3,'Excerpt','Article content','published','2020-01-01T19:00:00Z')",[ids[i],'New '+i,'new-'+i]);
+ const names=['Amaka','Tunde','Ngozi','Aisha','Chinedu','Thandi','Kwame','Nia','David','Sarah','Emily','Arjun','Priya','Kenji','Mei','Lucia','Sofia','Emma'];
+ const payload=names.map((name,i)=>({name,content:'A distinct article-specific prepared response from '+name,created_at:new Date(Date.parse('2020-01-01T20:00:00Z')+Math.floor(i/3)*86400000+i*1000).toISOString()}));
+ const source=(await db.query('select to_jsonb(a) as source from public.articles a where id=$1',[ids[0]])).rows[0].source;
+ const first=await connect(),second=await connect();await first.query(admin);await second.query(admin);
+ const preview=(await first.query('select public.prepare_new_comment_simulation($1,$2,$3) as result',[ids[0],source,JSON.stringify(payload)])).rows[0].result;
+ await first.query('begin;select pg_advisory_xact_lock(193576483,3001);');
+ const pending=second.query('select public.confirm_new_comment_simulation($1,true) as result',[preview.id]);
+ let waiting=false;for(let i=0;i<100;i++){const state=await db.query('select wait_event from pg_stat_activity where pid=$1',[second.processID]);if(state.rows[0]?.wait_event==='advisory'){waiting=true;break;}await new Promise(r=>setTimeout(r,20));}
+ assert.ok(waiting,'Confirmation must wait on existing advisory lock');
+ const seeded=await first.query('select public.confirm_new_comment_simulation($1,true) as result',[preview.id]);await first.query('commit');const skipped=await pending;
+ assert.equal(seeded.rows[0].result.status,'seeded');assert.equal(skipped.rows[0].result.status,'skipped');
+ assert.equal((await db.query('select count(*)::int as n from public.comments')).rows[0].n,18);
+ const stored=(await db.query('select name,content,created_at from public.comments order by created_at')).rows.map(c=>({...c,created_at:c.created_at.toISOString()}));assert.deepEqual(stored,payload);
+ console.log('PASS two-session preview confirmation: advisory wait observed, seeded once, skipped once, exact 18 previewed rows');
+ const source2=(await db.query('select to_jsonb(a) as source from public.articles a where id=$1',[ids[1]])).rows[0].source;
+ const different=payload.map(c=>({...c,created_at:new Date(Date.parse(c.created_at)+60000).toISOString()}));
+ const p2=(await first.query('select public.prepare_new_comment_simulation($1,$2,$3) as result',[ids[1],source2,JSON.stringify(different)])).rows[0].result;
+ await db.query("update public.articles set title='Changed after preview' where id=$1",[ids[1]]);
+ await assert.rejects(first.query('select public.confirm_new_comment_simulation($1,true)',[p2.id]),/Article changed/);
+ const source3=(await db.query('select to_jsonb(a) as source from public.articles a where id=$1',[ids[1]])).rows[0].source;
+ const p3=(await first.query('select public.prepare_new_comment_simulation($1,$2,$3) as result',[ids[1],source3,JSON.stringify(different)])).rows[0].result;
+ await db.query("update journal_private.comment_simulation_previews set expires_at=now()-interval '1 hour' where id=$1",[p3.id]);
+ await assert.rejects(first.query('select public.confirm_new_comment_simulation($1,true)',[p3.id]),/expired/);
+ assert.equal((await db.query('select count(*)::int as n from public.comments')).rows[0].n,18);
+ const p4=(await first.query('select public.prepare_new_comment_simulation($1,$2,$3) as result',[ids[1],source3,JSON.stringify(different)])).rows[0].result;
+ await db.query("create temp table rollback_marker(x int); create function pg_temp.reject_test_comment() returns trigger language plpgsql as $$ begin if new.name='Ngozi' then raise exception 'Injected insertion failure'; end if; return new; end $$; create trigger reject_test_comment before insert on public.comments for each row execute function pg_temp.reject_test_comment();");
+ await assert.rejects(first.query('select public.confirm_new_comment_simulation($1,true)',[p4.id]),/Injected insertion failure/);
+ assert.equal((await db.query('select count(*)::int as n from public.comments')).rows[0].n,18);
+ assert.equal((await db.query('select count(*)::int as n from journal_private.comment_simulation_batches')).rows[0].n,1);
+ assert.equal((await db.query('select consumed_at from journal_private.comment_simulation_previews where id=$1',[p4.id])).rows[0].consumed_at,null);
+ await db.query('drop trigger reject_test_comment on public.comments');
+ console.log('PASS injected mid-batch failure rolls back comments, ledger and preview consumption together');
+ await first.query("select public.remove_comment_simulation(public.comment_simulation_snapshot()->>'token',true)");
+ await assert.rejects(first.query('select public.confirm_new_comment_simulation($1,true)',[preview.id]),/used or expired/);
+ console.log('PASS changed/expired previews rejected without inserts; consumed preview cannot replay after explicit cleanup');
+}
