@@ -3,6 +3,7 @@ import {useState} from "react";
 import {previewSimulationCleanupAction,removeSimulationAction} from "@/app/admin/(protected)/simulation-actions";
 import type {SimulationSnapshot} from "@/lib/journal/comment-simulation";
 import NewSimulationWorkflow from "./NewSimulationWorkflow";
+import ExistingSimulationDates from "./ExistingSimulationDates";
 export default function CommentSimulationTools(){
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState("");
  const [cleanup,setCleanup]=useState<SimulationSnapshot|null>(null);
@@ -20,6 +21,7 @@ export default function CommentSimulationTools(){
   finally {setBusy(false);}
  }
  return <section className="admin-comment-card" aria-labelledby="simulation-title"><h2 id="simulation-title">Simulation Tools</h2><NewSimulationWorkflow/><hr/>
+ <ExistingSimulationDates/><hr/>
  <button className="text-link" disabled={busy} onClick={preview}>Remove Simulated Comments</button>
  {error&&<p role="alert">{error}</p>}{message&&<p role="status">{message}</p>}
  {cleanup&&<div><p>Simulated comments to remove: {cleanup.count}. Seeded article records to reset: {cleanup.articleIds.length}.</p><button disabled={busy} onClick={remove}>Confirm removal of simulated comments</button><button disabled={busy} onClick={()=>setCleanup(null)}>Cancel</button></div>}

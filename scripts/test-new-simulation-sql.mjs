@@ -20,13 +20,18 @@ try {
  run('pg_ctl',['-D',data,'-l',path.join(data,'server.log'),'-o','-h 127.0.0.1 -p '+port,'-w','start']);started=true;
  const db=await connect();const sql=query=>db.query(query);
  await sql(await readFile(path.join(root,'scripts/simulation-test-bootstrap.sql'),'utf8'));
- for(const file of (await readdir(path.join(root,'supabase/migrations'))).filter(f=>f.endsWith('.sql')&&!f.includes('20261001000100')).sort())await sql(await readFile(path.join(root,'supabase/migrations',file),'utf8'));
+ for(const file of (await readdir(path.join(root,'supabase/migrations'))).filter(f=>f.endsWith('.sql')&&f<'20261001000100').sort())await sql(await readFile(path.join(root,'supabase/migrations',file),'utf8'));
  for(const file of ['schema_security.sql','reviewed_work_security.sql','comment_simulation_security.sql']){await sql(await readFile(path.join(root,'supabase/tests',file),'utf8'));console.log('PASS '+file);}
  await sql(await readFile(path.join(root,'supabase/migrations/20261001000100_new_simulation_previews.sql'),'utf8'));
  await sql(await readFile(path.join(root,'supabase/tests/new_simulation_security.sql'),'utf8'));
  console.log('PASS new_simulation_security.sql: exact preview, boundaries, authorization, preservation and cleanup');
+ await sql(await readFile(path.join(root,'supabase/migrations/20261001000200_existing_simulation_dates.sql'),'utf8'));
+ await sql(await readFile(path.join(root,'supabase/tests/new_simulation_security.sql'),'utf8'));
+ console.log('PASS future-workflow SQL regression after installing existing-date migration');
  const {testNewSimulationConcurrency}=await import('./test-new-simulation-concurrency.mjs');
  await testNewSimulationConcurrency(db,connect);
+ const {testExistingSimulationDates}=await import('./test-existing-simulation-dates.mjs');
+ await testExistingSimulationDates(db,connect);
 } finally {
  await Promise.allSettled(clients.map(client=>client.end()));
  if(started)run('pg_ctl',['-D',data,'-m','fast','-w','stop']);
