@@ -25,6 +25,8 @@ try {
  await sql(await readFile(path.join(root,'supabase/migrations/20261001000100_new_simulation_previews.sql'),'utf8'));
  await sql(await readFile(path.join(root,'supabase/tests/new_simulation_security.sql'),'utf8'));
  console.log('PASS new_simulation_security.sql: exact preview, boundaries, authorization, preservation and cleanup');
+ const {testSimulationEligibility}=await import('./test-simulation-eligibility.mjs');
+ await testSimulationEligibility(db);
  await sql(await readFile(path.join(root,'supabase/migrations/20261001000200_existing_simulation_dates.sql'),'utf8'));
  await sql(await readFile(path.join(root,'supabase/tests/new_simulation_security.sql'),'utf8'));
  console.log('PASS future-workflow SQL regression after installing existing-date migration');

@@ -2,12 +2,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { articleFingerprint, type SimulationArticle } from "./comment-simulation-generator";
 import { discoverSimulationArticles, simulationSnapshot } from "./comment-simulation";
-import { prepareSimulationPlan } from "./simulation-plan";
+import { prepareSimulationPlan, simulationEligibility, simulationWaitingMessage } from "./simulation-plan";
 import dataset from "./comment-simulation-dataset.json";
 import { parseRichContent, richTextContent } from "./rich-content";
 export type ScheduledComment = {name:string;content:string;created_at:string};
 export type StoredSimulationPreview = {status:"preview";id:string;articleId:string;title:string;comments:ScheduledComment[];expiresAt:string};
-export type NewSimulationArticle = {id:string;title:string;alreadySimulated:boolean;source?:{excerpt:string;category:string;content:string;publishedAt:string|null;fingerprint:string};preparedDataset?:string};
+export type NewSimulationArticle = {id:string;title:string;alreadySimulated:boolean;source?:{excerpt:string;category:string;content:string;publishedAt:string|null;fingerprint:string};preparedDataset?:string;eligibility?:ReturnType<typeof simulationEligibility> & {message?:string}};
 const columns="id,title,slug,excerpt,content,published_at,updated_at,categories(name)";
 const signal=()=>AbortSignal.timeout(15000);
 function checkedError(error:{code?:string;message?:string}) {
@@ -15,13 +15,16 @@ function checkedError(error:{code?:string;message?:string}) {
  if(error.code==="PGRST202"||error.code==="42883")return new Error("The new simulation preview migration is not installed.");
  return new Error("Simulation request failed. Refresh before retrying; an interrupted confirmation may have committed.");
 }
-export async function inspectNewSimulationArticles(client:SupabaseClient):Promise<NewSimulationArticle[]> {
+export async function inspectNewSimulationArticles(client:SupabaseClient,now=Date.now()):Promise<NewSimulationArticle[]> {
  const state=await simulationSnapshot(client), articles=await discoverSimulationArticles(client);
  return articles.map(article=>{
   if(state.articleIds.includes(article.id))return {id:article.id,title:article.title,alreadySimulated:true};
   const fingerprint=articleFingerprint(article), doc=parseRichContent(article.content);
   const entry=(dataset as Record<string,{fingerprint:string}>)[article.id];
-  return {id:article.id,title:article.title,alreadySimulated:false,source:{excerpt:article.excerpt,category:article.categories?.name??"Uncategorised",content:doc?richTextContent(doc):article.content,publishedAt:article.published_at??null,fingerprint},preparedDataset:entry?.fingerprint===fingerprint?JSON.stringify(entry,null,2):JSON.stringify({fingerprint,comments:[],engagementAnchors:{agreement:0,disagreement:1,question:2,observation:3,reflection:4,clarification:5,connection:6,alternative:7}},null,2)};
+  let eligibility:NewSimulationArticle["eligibility"];
+  try {const current=simulationEligibility(article.published_at,now);eligibility={...current,...(!current.counts.length?{message:simulationWaitingMessage}:{})};}
+  catch(error){eligibility={counts:[],minimum:null,maximum:null,availableUtcDates:0,message:error instanceof Error?error.message:"Unable to calculate scheduling eligibility."};}
+  return {id:article.id,title:article.title,alreadySimulated:false,eligibility,source:{excerpt:article.excerpt,category:article.categories?.name??"Uncategorised",content:doc?richTextContent(doc):article.content,publishedAt:article.published_at??null,fingerprint},preparedDataset:entry?.fingerprint===fingerprint?JSON.stringify(entry,null,2):JSON.stringify({fingerprint,comments:[],engagementAnchors:{agreement:0,disagreement:1,question:2,observation:3,reflection:4,clarification:5,connection:6,alternative:7}},null,2)};
  });
 }
 export async function prepareNewSimulation(client:SupabaseClient,id:string,input:unknown,now=Date.now()):Promise<StoredSimulationPreview|{status:"skipped";count:0}> {

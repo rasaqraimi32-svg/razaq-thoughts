@@ -29,9 +29,9 @@ for(const article of articles) test('article-specific generation: '+article.titl
   for(const c of comments){assert.match(c.name,/^[A-Za-z]{2,40}$/);assert.ok(c.content.length>=20&&c.content.length<=2000);assert.ok(dataset[article.id].comments.includes(c.content));}
  }
 });
-test('all 100 comments are distinct across articles, with no generic fallback',()=>{
+test('all 150 comments are distinct across articles, with no generic fallback',()=>{
  const bodies=Object.values(dataset).flatMap(d=>d.comments);
- assert.equal(bodies.length,100);assert.equal(new Set(bodies).size,100);
+ assert.equal(bodies.length,150);assert.equal(new Set(bodies).size,150);
  assert.throws(()=>generator.generateSimulatedComments({...articles[0],id:'unknown'}),/new or edited/);
  for(const key of ['title','excerpt','content'])assert.throws(()=>generator.generateSimulatedComments({...articles[0],[key]:'Changed'}),/new or edited/);
  assert.throws(()=>generator.generateSimulatedComments({...articles[0],categories:{name:'Changed'}}),/new or edited/);
